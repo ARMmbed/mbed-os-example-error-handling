@@ -103,7 +103,7 @@ mbed_error_status_t save_error_history()
 static Semaphore    callback_sem;
 void my_error_hook(const mbed_error_ctx *error_ctx)
 {
-    printf("\nError Hook invoked");
+    //Fire the semaphore
     callback_sem.release();
 }
 
@@ -214,7 +214,10 @@ int main()
         return -1;
     }
     
-    printf("\nError hook successful");
+    printf("\nError hook successful\n");
     
-    printf("\nDone...\n");    
+    //Wait 1 secs to flush all the printfs out
+    wait(1.0);
+    
+    MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_APPLICATION, MBED_ERROR_OPERATION_PROHIBITED), "System type error", 0xDEADDEAD );
 }

@@ -17,8 +17,9 @@ One of the functionality with error handling feature is to save the error log in
 The example program does have sample code to invoke that functionality, but you will need to pass a special flag as part of your command if 
 you want to test that functionality.
 
-Note that the example application uses MBED_WARNING macros to demostrate the usage. Usage of MBED_ERROR macros are identical but the behavior is 
-different in that calling MBED_ERROR macros halt the application after the recording the error.
+Note that the example application mostly uses MBED_WARNING macros to demostrate the usage. Usage of MBED_ERROR macros are identical but the behavior is 
+different in that calling MBED_ERROR macros halt the application after the recording the error. So, in this test application MBED_ERROR() call 
+is the last call we make.
 
 ## Setup
 
@@ -91,9 +92,16 @@ The output should look similar to below:
 Error Handling and Error Coding Demo...
 Error Status and Context capture successful
 Error history capture successful
-Error Hook invoked
 Error hook successful
-Done...
+
+
+++ MbedOS Error Info ++
+Error Status: 0x80000110 Code: 272 Entity: 0
+Error Message: System type error
+Location: 0x61f5
+Error Value: 0xdeaddead
+Current Thread: Id: 0x20001f70 Entry: 0x7fa5 StackSize: 0x1000 StackMem: 0x20000f70 SP: 0x20001ed8
+-- MbedOS Error Info --
 ```
 
 If you have enabled testing for file saving feature, the output should look similar to below.
@@ -101,21 +109,28 @@ If you have enabled testing for file saving feature, the output should look simi
 Error Handling and Error Coding Demo...
 Error Status and Context capture successful
 Error history capture successful
-First Error: Status:0x80ff0101 ThreadId:0x20002068 Address:0xb1e3 Value:0x1234
+First Error: Status:0x80000101 ThreadId:0x20002068 Address:0xb233 Value:0x1234
 
-Last Error: Status:0x80ff0107 ThreadId:0x20002068 Address:0xb1e3 Value:0x5
+Last Error: Status:0x80ff0107 ThreadId:0x20002068 Address:0xb233 Value:0x5
 
-3: Status:0x80ff0107 ThreadId:0x20002068 Address:0xb1e3 Value:0x5
+3: Status:0x80ff0107 ThreadId:0x20002068 Address:0xb233 Value:0x5
 
-2: Status:0x80ff0108 ThreadId:0x20002068 Address:0xb1e3 Value:0x4
+2: Status:0x80ff0108 ThreadId:0x20002068 Address:0xb233 Value:0x4
 
-1: Status:0x80ff0109 ThreadId:0x20002068 Address:0xb1e3 Value:0x3
+1: Status:0x80ff0109 ThreadId:0x20002068 Address:0xb233 Value:0x3
 
-0: Status:0x80ff010c ThreadId:0x20002068 Address:0xb1e3 Value:0x2
+0: Status:0x80ff010c ThreadId:0x20002068 Address:0xb233 Value:0x2
 
 Saving error history to filesystem successful
-Error Hook invoked
 Error hook successful
-Done...
+
+
+++ MbedOS Error Info ++
+Error Status: 0x80000110 Code: 272 Entity: 0
+Error Message: System type error
+Location: 0xaa79
+Error Value: 0xdeaddead
+Current Thread: Id: 0x20002068 Entry: 0xc97d StackSize: 0x1000 StackMem: 0x20001068 SP: 0x20001fd0
+-- MbedOS Error Info --
 ```
 
