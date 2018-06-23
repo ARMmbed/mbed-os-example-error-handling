@@ -157,7 +157,8 @@ int main()
     }
     
     printf("\nError Status and Context capture successful");
-    
+
+#if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED    
     //Add 4 error entries
     MBED_WARNING1(MBED_ERROR_TIME_OUT, "Timeout error", 100 );
     MBED_WARNING1(MBED_ERROR_FAILED_OPERATION, "Already in use error", 101 );
@@ -198,8 +199,8 @@ int main()
     }
     
     printf("\nSaving error history to filesystem successful");
-#endif
-
+#endif //#ifdef MBED_TEST_SIM_BLOCKDEVICE
+#endif //#if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
     //Use error hook functionality
     if(MBED_SUCCESS != mbed_set_error_hook(my_error_hook)) {
         printf("\nERROR: Registering error hook failed");
@@ -219,5 +220,5 @@ int main()
     //Wait 1 secs to flush all the printfs out
     wait(1.0);
     
-    MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_APPLICATION, MBED_ERROR_OPERATION_PROHIBITED), "System type error", 0xDEADDEAD );
+    MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_I2C, MBED_ERROR_OPERATION_PROHIBITED), "I2C driver error", 0xDEADDEAD );
 }
