@@ -91,16 +91,16 @@ The output should look similar to below:
 ```
 Error Handling and Error Coding Demo...
 Error Status and Context capture successful
-Error history capture successful
 Error hook successful
 
 
 ++ MbedOS Error Info ++
-Error Status: 0x80000110 Code: 272 Entity: 0
-Error Message: System type error
-Location: 0x61f5
-Error Value: 0xdeaddead
-Current Thread: Id: 0x20001f70 Entry: 0x7fa5 StackSize: 0x1000 StackMem: 0x20000f70 SP: 0x20001ed8
+Error Status: 0x800B0110 Code: 272 Module: 11
+Error Message: I2C driver error
+Location: 0x5D03
+Error Value: 0xDEADDEAD
+Current Thread: Id: 0x20001E90 Entry: 0x62B1 StackSize: 0x1000 StackMem: 0x20000E90 SP: 0x20001E18
+For more info, visit: https://armmbed.github.io/mbedos-error/?error=0x800B0110
 -- MbedOS Error Info --
 ```
 
