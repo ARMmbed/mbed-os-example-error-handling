@@ -1,0 +1,8 @@
+{
+    "target_overrides": {
+        "*": {
+            "platform.crash-capture-enabled": false,
+            "platform.error-hist-enabled": true
+        }
+    }
+}
