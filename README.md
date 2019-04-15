@@ -134,3 +134,10 @@ Current Thread: Id: 0x20002068 Entry: 0xc97d StackSize: 0x1000 StackMem: 0x20001
 -- MbedOS Error Info --
 ```
 
+## License and contributions
+
+The software is provided under Apache-2.0 license. Contributions to this project are accepted under the same license. Please see [contributing.md](CONTRIBUTING.md) for more info.
+
+This project contains code from other projects. The original license text is included in those source files. They must comply with our license guide.
+
+
