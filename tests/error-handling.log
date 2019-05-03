@@ -1,0 +1,13 @@
+Error Handling and Error Coding Demo...
+Error Status and Context capture successful
+Error history capture successful
+Error hook successful
+
+
+++ MbedOS Error Info ++
+Error Status: 0x[0-9A-f]+ Code: \d+ Module: \d+
+Error Message: I2C driver error
+Location: 0x[0-9A-f]+
+Error Value: 0x[0-9A-f]+
+Current Thread: main  Id: 0x[0-9A-f]+ Entry: 0x[0-9A-f]+ StackSize: 0x[0-9A-f]+ StackMem: 0x[0-9A-f]+ SP: 0x[0-9A-f]+
+-- MbedOS Error Info --
