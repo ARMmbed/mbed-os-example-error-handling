@@ -4,9 +4,9 @@ Examples are tested using tool [htrun](https://github.com/ARMmbed/mbed-os-tools/
 
 To run the test, use following command after you build the example:
 
-This assumes that target K64F(DUT) with a mount point of D: and a serial port on COM4
+This assumes that example compiled with `GCC_ARM` and target `K64F`(DUT) with a mount point of `D:` and a serial port on `COM4`
 ```
-mbedhtrun -d D: -p COM4 -m K64F -f .\BUILD\K64F\GCC_ARM\error-handling.bin --compare-log tests\error-handling.log
+mbedhtrun -d D: -p COM4 -m K64F -f .\BUILD\K64F\GCC_ARM\mbed-os-example-error-handling.bin --compare-log tests\error-handling.log
 ```
 
 
