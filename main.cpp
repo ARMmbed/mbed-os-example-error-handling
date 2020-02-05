@@ -14,211 +14,222 @@
  * limitations under the License.
  */
 #include "mbed.h"
+#include "HeapBlockDevice.h"
+#include "LittleFileSystem.h"
 
-#ifdef MBED_TEST_SIM_BLOCKDEVICE
+mbed_error_ctx error_ctx = {0};
 
-// test configuration
-#ifndef MBED_TEST_FILESYSTEM
-#define MBED_TEST_FILESYSTEM LittleFileSystem
-#endif
+#if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
 
-#ifndef MBED_TEST_FILESYSTEM_DECL
-#define MBED_TEST_FILESYSTEM_DECL MBED_TEST_FILESYSTEM fs("fs")
-#endif
+#define MBED_FS_BLOCK_COUNT 8
+#define MBED_FS_BLOCK_SIZE 512
 
-#ifndef MBED_TEST_BLOCK_COUNT
-#define MBED_TEST_BLOCK_COUNT 64
-#endif
-
-#ifndef MBED_TEST_SIM_BLOCKDEVICE_DECL
-#define MBED_TEST_SIM_BLOCKDEVICE_DECL MBED_TEST_SIM_BLOCKDEVICE fd(MBED_TEST_BLOCK_COUNT*512, 1, 1, 512)
-#endif
-
-// declarations
-#define STRINGIZE(x) STRINGIZE2(x)
-#define STRINGIZE2(x) #x
-#define INCLUDE(x) STRINGIZE(x.h)
-
-#include INCLUDE(MBED_TEST_FILESYSTEM)
-#include INCLUDE(MBED_TEST_SIM_BLOCKDEVICE)
-
-MBED_TEST_FILESYSTEM_DECL;
-MBED_TEST_SIM_BLOCKDEVICE_DECL;
-
-/** Test save error log
- */
+HeapBlockDevice fd(MBED_FS_BLOCK_COUNT *MBED_FS_BLOCK_SIZE, 1, 1, MBED_FS_BLOCK_SIZE);
+LittleFileSystem fs("fs");
 mbed_error_status_t save_error_history()
 {
     mbed_error_status_t status = MBED_SUCCESS;
-    
     //Log some errors
-    MBED_WARNING1(MBED_ERROR_TIME_OUT, "Timeout error", 1 );
-    MBED_WARNING1(MBED_ERROR_ALREADY_IN_USE, "Already in use error", 2 );
-    MBED_WARNING1(MBED_ERROR_UNSUPPORTED, "Not supported error", 3 );
-    MBED_WARNING1(MBED_ERROR_ACCESS_DENIED, "Access denied error", 4 );
-    MBED_WARNING1(MBED_ERROR_ITEM_NOT_FOUND, "Not found error", 5 );
-    
+    MBED_WARNING1(MBED_ERROR_TIME_OUT, "Timeout error", 1);
+    MBED_WARNING1(MBED_ERROR_ALREADY_IN_USE, "Already in use error", 2);
+    MBED_WARNING1(MBED_ERROR_UNSUPPORTED, "Not supported error", 3);
+    MBED_WARNING1(MBED_ERROR_ACCESS_DENIED, "Access denied error", 4);
+    MBED_WARNING1(MBED_ERROR_ITEM_NOT_FOUND, "Not found error", 5);
     int error = 0;
-    
-    error = MBED_TEST_FILESYSTEM::format(&fd);
-    if(error < 0) {
-        printf("save_error_history: Failed formatting");
-        status = MBED_ERROR_FAILED_OPERATION;
+
+    error = LittleFileSystem::format(&fd);
+    if (error < 0) {
+        printf("save_error_history: Failed formatting\n");
+        return MBED_ERROR_FAILED_OPERATION;
     } else {
         error = fs.mount(&fd);
-        if(error < 0) {
-            printf("save_error_history: Failed mounting fs");
-            status = MBED_ERROR_FAILED_OPERATION;
+        if (error < 0) {
+            printf("save_error_history: Failed mounting fs\n");
+            return MBED_ERROR_FAILED_OPERATION;
         } else {
-            if(MBED_SUCCESS != mbed_save_error_hist("/fs/errors.txt")) {
-                printf("save_error_history: Failed saving error history");
-                status = MBED_ERROR_FAILED_OPERATION;
+            if (MBED_SUCCESS != mbed_save_error_hist("/fs/errors.txt")) {
+                printf("save_error_history: Failed saving error history\n");
+                return MBED_ERROR_FAILED_OPERATION;
             } else {
                 FILE *error_file = fopen("/fs/errors.txt", "r");
-                if(error_file == NULL) {
-                    printf("save_error_history: Unable to find error log in fs");
+                if (error_file == NULL) {
+                    printf("save_error_history: Unable to find error log in fsfopen\n");
+                    return MBED_ERROR_FAILED_OPERATION;
                 } else {
                     char buff[64] = {0};
-                    while (!feof(error_file)){
-                      int size = fread(&buff[0], 1, 15, error_file);
-                      fwrite(&buff[0], 1, size, stdout);
+                    while (!feof(error_file)) {
+                        int size = fread(&buff[0], 1, 15, error_file);
+                        fwrite(&buff[0], 1, size, stdout);
                     }
                     fclose(error_file);
                 }
             }
-            
+
             error = fs.unmount();
-            if(error < 0) {
-                printf("save_error_history: Failed unmounting fs");
-                status = MBED_ERROR_FAILED_OPERATION;
+            if (error < 0) {
+                printf("save_error_history: Failed unmounting fs\n");
+                return MBED_ERROR_FAILED_OPERATION;
             }
         }
     }
-    
-    return status;
+    return MBED_SUCCESS;
 }
 
-#endif
+int log_warning_error_hist()
+{
+    // Add 4 error entries
+    MBED_WARNING1(MBED_ERROR_TIME_OUT, "Timeout error", 100);
+    MBED_WARNING1(MBED_ERROR_FAILED_OPERATION, "Already in use error", 101);
+    MBED_WARNING1(MBED_ERROR_UNSUPPORTED, "Not supported", 102);
+    MBED_WARNING1(MBED_ERROR_ACCESS_DENIED, "Access denied", 103);
 
-static Semaphore    callback_sem;
+    // Retrieve the logged errors from the error history
+    mbed_get_error_hist_info(0, &error_ctx);
+    if (error_ctx.error_status != MBED_ERROR_TIME_OUT) {
+        printf("ERROR: Invalid Error Status Detected, expected MBED_ERROR_TIME_OUT\n");
+        return -1;
+    }
+
+    mbed_get_error_hist_info(1, &error_ctx);
+    if (error_ctx.error_status != MBED_ERROR_FAILED_OPERATION) {
+        printf("ERROR: Invalid Error Status Detected, expected MBED_ERROR_FAILED_OPERATION\n");
+        return -1;
+    }
+
+    mbed_get_error_hist_info(2, &error_ctx);
+    if (error_ctx.error_status != MBED_ERROR_UNSUPPORTED) {
+        printf("ERROR: Invalid Error Status Detected, expected MBED_ERROR_UNSUPPORTED\n");
+        return -1;
+    }
+
+    mbed_get_error_hist_info(3, &error_ctx);
+    if (error_ctx.error_status != MBED_ERROR_ACCESS_DENIED) {
+        printf("ERROR: Invalid Error Status Detected, expected MBED_ERROR_ACCESS_DENIED\n");
+        return -1;
+    }
+
+    printf("Error history capture successful\n");
+
+    return MBED_SUCCESS;
+
+}
+#endif // #if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
+
+static Semaphore callback_sem;
 void my_error_hook(const mbed_error_ctx *error_ctx)
 {
-    //Fire the semaphore
+    // Fire the semaphore
     callback_sem.release();
 }
 
+int error_hook()
+{
+    // Use error hook functionality
+    if (MBED_SUCCESS != mbed_set_error_hook(my_error_hook)) {
+        printf("ERROR: Registering error hook failed\n");
+        return -1;
+    }
+
+    MBED_WARNING1(MBED_ERROR_INVALID_ARGUMENT, "Test for error hook", 1234);
+    bool sem_status = callback_sem.try_acquire_until(5000);
+
+    if (!sem_status) {
+        printf("ERROR: semaphore timedout\n");
+        return -1;
+    }
+    printf("Error hook successful\n");
+    return MBED_SUCCESS;
+}
+
+int log_warning_error()
+{
+    // Log an warning error which is not catastrophic/fatal and this would not halt the system.
+    MBED_WARNING1(
+        MBED_MAKE_ERROR(
+            MBED_MODULE_APPLICATION, MBED_ERROR_CODE_INVALID_ARGUMENT
+        ),
+        "System type error", 0x1234
+    );
+
+    MBED_WARNING1(
+        MBED_MAKE_ERROR(
+            MBED_MODULE_PLATFORM, MBED_ERROR_CODE_ALREADY_IN_USE
+        ),
+        "Already in use error", 0xABCD);
+
+    // Retrieve the first error info logged
+    if (MBED_SUCCESS == mbed_get_first_error_info(&error_ctx)) {
+        if (error_ctx.error_value != 0x1234) {
+            printf("ERROR: Invalid Error Value Detected\n");
+            return -1;
+        }
+        if (MBED_GET_ERROR_MODULE(error_ctx.error_status) != MBED_MODULE_APPLICATION) {
+            printf("ERROR: Invalid Error Module Detected\n");
+            return -1;
+        }
+        if (MBED_GET_ERROR_CODE(error_ctx.error_status) != MBED_ERROR_CODE_INVALID_ARGUMENT) {
+            printf("ERROR: Invalid Error Code Detected\n");
+            return -1;
+        }
+    } else {
+        printf("Retrieve the first error failed\n");
+        return -1;
+    }
+    // Retrieve the last error info logged
+    if (MBED_SUCCESS == mbed_get_last_error_info(&error_ctx)) {
+        if (error_ctx.error_value != 0xABCD) {
+            printf("ERROR: Invalid Error Value Detected\n");
+            return -1;
+        }
+        if (MBED_GET_ERROR_MODULE(error_ctx.error_status) != MBED_MODULE_PLATFORM) {
+            printf("ERROR: Invalid Error Module Detected\n");
+            return -1;
+        }
+        if (MBED_GET_ERROR_CODE(error_ctx.error_status) != MBED_ERROR_CODE_ALREADY_IN_USE) {
+            printf("ERROR: Invalid Error Code Detected\n");
+            return -1;
+        }
+    } else {
+        printf("Retrieve the last error failed\n");
+        return -1;
+    }
+    return MBED_SUCCESS;
+}
+
+
+void error_halt()
+{
+    MBED_ERROR1(
+        MBED_MAKE_ERROR(MBED_MODULE_DRIVER_I2C, MBED_ERROR_OPERATION_PROHIBITED
+                       ),
+        "I2C driver error", 0xDEADDEAD
+    );
+}
 int main()
 {
-    mbed_error_ctx error_ctx = {0};
-    
-    printf("\nError Handling and Error Coding Demo...");    
-    
-    //Use mbed_clear_all_errors to clear the currently logged warnings/errors and reset error count to 0
+    printf("This is the error handling Mbed OS example\n");
+    // Clear the currently logged warnings/errors and error count
     mbed_clear_all_errors();
-    
-    //Use MBED_WARNING macros to log an error which is not catastrophic/fatal. This would log an error but would not halt the system. 
-    //The erroring module is set to MBED_MODULE_APPLICATION and error code is set to MBED_ERROR_CODE_INVALID_ARGUMENT
-    MBED_WARNING1(MBED_MAKE_ERROR(MBED_MODULE_APPLICATION, MBED_ERROR_CODE_INVALID_ARGUMENT), "System type error", 0x1234 );
-    
-    //Here the erroring module is set to MBED_MODULE_PLATFORM and error code is set to MBED_ERROR_CODE_ALREADY_IN_USE
-    MBED_WARNING1(MBED_MAKE_ERROR(MBED_MODULE_PLATFORM, MBED_ERROR_CODE_ALREADY_IN_USE), "Already in use error", 0xABCD );
-    
-    //Now that we logged the error retrieve them and ensure they are logged correctly
-    //Use mbed_get_last_error_info API to retrieve the very first error we logged. In this case
-    //it would be MBED_ERROR_INVALID_ARGUMENT since we cleared all the previous in the start of this app
-    mbed_error_status_t status = mbed_get_first_error_info( &error_ctx );
-    if(error_ctx.error_value != 0x1234) {
-        printf("\nERROR: Invalid Error Value Detected");
-        return -1;
-    }
-    if(MBED_GET_ERROR_MODULE(error_ctx.error_status) != MBED_MODULE_APPLICATION) {
-        printf("\nERROR: Invalid Error Module Detected");
-        return -1;
-    }
-    if(MBED_GET_ERROR_CODE(error_ctx.error_status) != MBED_ERROR_CODE_INVALID_ARGUMENT) {
-        printf("\nERROR: Invalid Error Code Detected");
-        return -1;
-    }
-    
-    //Use mbed_get_last_error_info API to retrieve the very first error we logged. In this case
-    //it would be MBED_ERROR_ALREADY_IN_USE since we cleared all the previous in the start of this app
-    status = mbed_get_last_error_info( &error_ctx );
-    if(status !=MBED_SUCCESS || error_ctx.error_value != 0xABCD) {
-        printf("\nERROR: Invalid Error Value Detected");
-        return -1;
-    }
-    if(MBED_GET_ERROR_MODULE(error_ctx.error_status) != MBED_MODULE_PLATFORM) {
-        printf("\nERROR: Invalid Error Module Detected");
-        return -1;
-    }
-    if(MBED_GET_ERROR_CODE(error_ctx.error_status) != MBED_ERROR_CODE_ALREADY_IN_USE) {
-        printf("\nERROR: Invalid Error Code Detected");
-        return -1;
-    }
-    
-    printf("\nError Status and Context capture successful");
 
-#if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED    
-    //Add 4 error entries
-    MBED_WARNING1(MBED_ERROR_TIME_OUT, "Timeout error", 100 );
-    MBED_WARNING1(MBED_ERROR_FAILED_OPERATION, "Already in use error", 101 );
-    MBED_WARNING1(MBED_ERROR_UNSUPPORTED, "Not supported", 102 );
-    MBED_WARNING1(MBED_ERROR_ACCESS_DENIED, "Access denied", 103 );
-        
-    //Retrieve the logged errors from error history
-    status = mbed_get_error_hist_info( 0, &error_ctx );
-    if(status !=MBED_SUCCESS || error_ctx.error_status != MBED_ERROR_TIME_OUT) {
-        printf("\nERROR: Invalid Error Status Detected for mbed_get_error_hist_info, expected MBED_ERROR_TIME_OUT");
-        return -1;
+    if (MBED_SUCCESS != log_warning_error()) {
+        printf("ERROR: logging and retrieving the warning failed\n");
     }
-    
-    status = mbed_get_error_hist_info( 1, &error_ctx );
-    if(status !=MBED_SUCCESS || error_ctx.error_status != MBED_ERROR_FAILED_OPERATION) {
-        printf("\nERROR: Invalid Error Status Detected for mbed_get_error_hist_info, expected MBED_ERROR_FAILED_OPERATION");
-        return -1;
+
+#if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
+    if (MBED_SUCCESS != log_warning_error_hist()) {
+        printf("ERROR: logging and retrieving error hist failed\n");
     }
-    
-    status = mbed_get_error_hist_info( 2, &error_ctx );
-    if(status !=MBED_SUCCESS || error_ctx.error_status != MBED_ERROR_UNSUPPORTED) {
-        printf("\nERROR: Invalid Error Status Detected for mbed_get_error_hist_info, expected MBED_ERROR_UNSUPPORTED");
-        return -1;
+
+    if (MBED_SUCCESS != save_error_history()) {
+        printf("ERROR: Saving Error history failed\n");
     }
-    
-    status = mbed_get_error_hist_info( 3, &error_ctx );
-    if(status !=MBED_SUCCESS || status !=MBED_SUCCESS || error_ctx.error_status != MBED_ERROR_ACCESS_DENIED) {
-        printf("\nERROR: Invalid Error Status Detected for mbed_get_error_hist_info, expected MBED_ERROR_ACCESS_DENIED");
-        return -1;
+#endif
+
+    if (MBED_SUCCESS != error_hook()) {
+        printf("ERROR: Error hook failed\n");
     }
-    
-    printf("\nError history capture successful");
-    
-#ifdef MBED_TEST_SIM_BLOCKDEVICE    
-    if( MBED_SUCCESS != save_error_history()) {
-        printf("\nERROR: Saving Error history failed");
-        return -1;
-    }
-    
-    printf("\nSaving error history to filesystem successful");
-#endif //#ifdef MBED_TEST_SIM_BLOCKDEVICE
-#endif //#if MBED_CONF_PLATFORM_ERROR_HIST_ENABLED
-    //Use error hook functionality
-    if(MBED_SUCCESS != mbed_set_error_hook(my_error_hook)) {
-        printf("\nERROR: Registering error hook failed");
-        return -1;
-    }
-    
-    MBED_WARNING1(MBED_ERROR_INVALID_ARGUMENT, "Test for error hook", 1234);
-    int32_t sem_status = callback_sem.wait(5000);
-    
-    if(sem_status <= 0) {
-        printf("\nERROR: Error hook failed");
-        return -1;
-    }
-    
-    printf("\nError hook successful\n");
-    
-    //Wait 1 secs to flush all the printfs out
-    wait(1.0);
-    
-    MBED_ERROR1(MBED_MAKE_ERROR(MBED_MODULE_DRIVER_I2C, MBED_ERROR_OPERATION_PROHIBITED), "I2C driver error", 0xDEADDEAD );
+
+    ThisThread::sleep_for(1000);
+
+    error_halt();
 }
