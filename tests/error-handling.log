@@ -1,13 +1,55 @@
-Error Handling and Error Coding Demo...
-Error Status and Context capture successful
-Error history capture successful
-Error hook successful
+This is the error handling Mbed OS example
+
+Reporting the following warnings:
+   MBED_ERROR_CODE_INVALID_ARGUMENT Status: 0x80000101 Value: 0x1234
+   MBED_ERROR_CODE_INVALID_ARGUMENT Status: 0x80000101 Value: 0x4567
+   MBED_ERROR_CODE_ALREADY_IN_USE   Status: 0x8001010c Value: 0xABCD
+Retrieving first error info logged...  successful
+Retrieving last error info logged...   successful
+
+Reporting the following warnings:
+   MBED_ERROR_TIME_OUT         Status: 0x80ff010d Value: 0x64
+   MBED_ERROR_FAILED_OPERATION Status: 0x80ff010f Value: 0x65
+   MBED_ERROR_UNSUPPORTED      Status: 0x80ff0109 Value: 0x66
+   MBED_ERROR_ACCESS_DENIED    Status: 0x80ff0108 Value: 0x67
+Calling mbed_get_error_hist_info() to retrieve the error history:
+   Status: 0x80ff010d Value: 0x64
+   Status: 0x80ff010f Value: 0x65
+   Status: 0x80ff0109 Value: 0x66
+   Status: 0x80ff0108 Value: 0x67
+Retrieving error history... successful
+
+Reporting the following warnings:
+   MBED_ERROR_TIME_OUT       Status: 0x80ff010d Value: 0x1
+   MBED_ERROR_ALREADY_IN_USE Status: 0x80ff010c Value: 0x2
+   MBED_ERROR_UNSUPPORTED    Status: 0x80ff0109 Value: 0x3
+   MBED_ERROR_ACCESS_DENIED  Status: 0x80ff0108 Value: 0x4
+   MBED_ERROR_ITEM_NOT_FOUND Status: 0x80ff0107 Value: 0x5
+Calling mbed_save_error_hist() to save the error history to a file
+Retrieving error history by reading from file:
+
+First Error: Status:0x80000101 ThreadId:0x[0-9A-f]+ Address:0x[0-9A-f]+ Value:0x1234
+
+Last Error: Status:0x80ff0107 ThreadId:0x[0-9A-f]+ Address:0x[0-9A-f]+ Value:0x5
+
+3: Status:0x80ff0107 ThreadId:0x[0-9A-f]+ Address:0x[0-9A-f]+ Value:0x5
+
+2: Status:0x80ff0108 ThreadId:0x[0-9A-f]+ Address:0x[0-9A-f]+ Value:0x4
+
+1: Status:0x80ff0109 ThreadId:0x[0-9A-f]+ Address:0x[0-9A-f]+ Value:0x3
+
+0: Status:0x80ff010c ThreadId:0x[0-9A-f]+ Address:0x[0-9A-f]+ Value:0x2
+Retrieving error history by reading from file... successful
+
+Registering my_error_hook... successful
+Reporting an error. Note that this will cause the system to halt
 
 
 ++ MbedOS Error Info ++
 Error Status: 0x[0-9A-f]+ Code: \d+ Module: \d+
 Error Message: I2C driver error
 Location: 0x[0-9A-f]+
-Error Value: 0x[0-9A-f]+
+Error Value: 0xDEADDEAD
 Current Thread: main\s+Id: 0x[0-9A-f]+ Entry: 0x[0-9A-f]+ StackSize: 0x[0-9A-f]+ StackMem: 0x[0-9A-f]+ SP: 0x[0-9A-f]+
+For more info, visit:
 -- MbedOS Error Info --

@@ -1,39 +1,28 @@
 ![](./resources/official_armmbed_example_badge.png)
-# Error Handling Mbed OS example
+# Error handling Mbed OS example
 
-This guide reviews the steps required to use error handling on an Mbed OS enabled platform.
+This example shows how Mbed OS error handling works on an Mbed OS enabled platform.
 
-You can find the complete information about error handling [here](https://os.mbed.com/docs/mbed-os/v5.15/apis/error-handling.html).
+You can find more information about the error handling APIs in the [documentation](https://os.mbed.com/docs/mbed-os/latest/apis/error-handling.html).
 
-You can build this project with all supported [Mbed OS build tools](https://os.mbed.com/docs/mbed-os/latest/tools/index.html). However, this example project specifically refers to the command-line interface tool [Arm Mbed CLI](https://github.com/ARMmbed/mbed-cli#installing-mbed-cli).
+You can build this project with all supported [Mbed OS build tools](https://os.mbed.com/docs/mbed-os/latest/tools/index.html). However, this example project specifically refers to the command-line interface tool [Arm Mbed CLI](https://github.com/ARMmbed/mbed-cli#installing-mbed-cli):
+
+1. Install Mbed CLI.
+1. Clone this repository on your system.
+1. Change the current directory to where the project was cloned.
 
 ## Application functionality
 
-The `main()` function calls the following functions:
-- **log_warning_error()**:  `MBED_MAKE_ERROR()` macro merges the log modules(application and platform) with error code before getting logged by `MBED_WARNING1()`. `mbed_get_first_error_info()` and `mbed_get_last_error_info()` used to retrieve the error context and `MBED_GET_ERROR_MODULE()` and `MBED_GET_ERROR_CODE()`  to decode the module and error code.
-- **log_warning_error_hist()**: Logs the multiple warning errors using `MBED_WARNING1()` and retrieve error context one by one using `mbed_get_error_hist_info()` based on the `index` where the warning errors were logged.
-- **save_error_history()**: Logs the multiple warning errors and using `mbed_save_error_hist()` to retrieves the error history, write into the file system.
-- **error_hook()**: Registers the error hook call back using `mbed_set_error_hook()` which gets called when the warning errors logged.
-- **error_halt()**: Logs with `MBED_ERROR1()` to halt the system.
+This example demonstrates the Mbed OS error handling feature and the APIs associated with it. One specific functionality is the error history, which saves to a file the errors that previously occurred in the system. This functionality requires storage support on the device. The example program creates a [little file system](https://os.mbed.com/docs/mbed-os/latest/apis/littlefilesystem.html) instance on a simulated [heap block device](https://os.mbed.com/docs/mbed-os/latest/apis/heapblockdevice.html).
 
+Note the example application mostly uses MBED_WARNING macros to generate errors to demonstrate the error handling APIs. MBED_ERROR macros are identical, but the behavior is different in that MBED_ERROR macros will halt the application after the error has been recorded. In this example application, `MBED_ERROR()` is called at the end.
 
-### Note:
+The example shows how to use the following APIs:
 
-[HeapBlockDevice](https://os.mbed.com/docs/mbed-os/v5.14/apis/heapblockdevice.html) is used in this example to create 4KB simulated memory with [LittleFileSystem](https://os.mbed.com/docs/mbed-os/v5.15/apis/littlefilesystem.html) which is used by error handling `mbed_save_error_hist()` to write the logs into the file system.
-
-## Preqrequisites
-
-1. [Install Mbed CLI](https://os.mbed.com/docs/mbed-os/latest/tools/installation-and-setup.html).
-1. Determine which toolchain supports your target.
-
-   Depending on the target, you can build the example project with the GCC_ARM, ARM or IAR toolchain. To learn which toolchain supports your target, run this command:
-
-   ```bash
-   $ mbed compile -S
-   ```
-
-1. Clone this repository on your system.
-1. Change the current directory to where the project was cloned.
+- `mbed_get_first_error_info()` and `mbed_get_last_error_info()` to retrieve the first and last error context information captured.
+- `mbed_get_error_hist_info()` to retrieve the error context information for a specific error from error history.
+- `mbed_save_error_hist()` to save the error history information to a file.
+- `mbed_set_error_hook()` to register an application defined error callback with the error handling system. The system calls this function with error context information whenever it handles `mbed_error` or `mbed_warning`.
 
 ## Building and running
 
@@ -48,59 +37,106 @@ The `main()` function calls the following functions:
 
 Your PC may take a few minutes to compile your code.
 
-The binary is located at `./BUILD/<TARGET>/<TOOLCHAIN>/mbed-os-example-cpu-stats.bin`.
+The binary is located at `./BUILD/<TARGET>/<TOOLCHAIN>/mbed-os-example-error-handling.bin`.
 
 Alternatively, you can manually copy the binary to the target, which gets mounted on the host computer through USB.
 
+Depending on the target, you can build the example project with the `GCC_ARM`, `ARM` or `IAR` toolchain. After installing Arm Mbed CLI, run the command below to determine which toolchain supports your target:
+
+```bash
+$ mbed compile -S
+```
+
 ## Expected output
 
-The serial terminal shows an output similar to the following:
+The serial terminal shows an output similar to:
+
 ```
---- Terminal on /dev/ttyACM0 - 9600,8,N,1 ---
+--- Terminal on /dev/tty.usbmodem31102 - 9600,8,N,1 ---
 This is the error handling Mbed OS example
-Error history capture successful
 
-First Error: Status:0x80000101 ThreadId:0x20001178 Address:0x1bcd Value:0x1234
+Reporting the following warnings:
+   MBED_ERROR_CODE_INVALID_ARGUMENT Status: 0x80000101 Value: 0x1234
+   MBED_ERROR_CODE_INVALID_ARGUMENT Status: 0x80000101 Value: 0x4567
+   MBED_ERROR_CODE_ALREADY_IN_USE   Status: 0x8001010c Value: 0xABCD
+Retrieving first error info logged...  successful
+Retrieving last error info logged...   successful
 
-Last Error: Status:0x80ff0107 ThreadId:0x20001178 Address:0x1d7d Value:0x5
+Reporting the following warnings:
+   MBED_ERROR_TIME_OUT         Status: 0x80ff010d Value: 0x64
+   MBED_ERROR_FAILED_OPERATION Status: 0x80ff010f Value: 0x65
+   MBED_ERROR_UNSUPPORTED      Status: 0x80ff0109 Value: 0x66
+   MBED_ERROR_ACCESS_DENIED    Status: 0x80ff0108 Value: 0x67
+Calling mbed_get_error_hist_info() to retrieve the error history:
+   Status: 0x80ff010d Value: 0x64
+   Status: 0x80ff010f Value: 0x65
+   Status: 0x80ff0109 Value: 0x66
+   Status: 0x80ff0108 Value: 0x67
+Retrieving error history... successful
 
-3: Status:0x80ff0107 ThreadId:0x20001178 Address:0x1d7d Value:0x5
+Reporting the following warnings:
+   MBED_ERROR_TIME_OUT       Status: 0x80ff010d Value: 0x1
+   MBED_ERROR_ALREADY_IN_USE Status: 0x80ff010c Value: 0x2
+   MBED_ERROR_UNSUPPORTED    Status: 0x80ff0109 Value: 0x3
+   MBED_ERROR_ACCESS_DENIED  Status: 0x80ff0108 Value: 0x4
+   MBED_ERROR_ITEM_NOT_FOUND Status: 0x80ff0107 Value: 0x5
+Calling mbed_save_error_hist() to save the error history to a file
+Retrieving error history by reading from file:
 
-2: Status:0x80ff0108 ThreadId:0x20001178 Address:0x1d6f Value:0x4
+First Error: Status:0x80000101 ThreadId:0x20001160 Address:0x1be5 Value:0x1234
 
-1: Status:0x80ff0109 ThreadId:0x20001178 Address:0x1d61 Value:0x3
+Last Error: Status:0x80ff0107 ThreadId:0x20001160 Address:0x1eab Value:0x5
 
-0: Status:0x80ff010c ThreadId:0x20001178 Address:0x1d53 Value:0x2
-Error hook successful
+3: Status:0x80ff0107 ThreadId:0x20001160 Address:0x1eab Value:0x5
+
+2: Status:0x80ff0108 ThreadId:0x20001160 Address:0x1e93 Value:0x4
+
+1: Status:0x80ff0109 ThreadId:0x20001160 Address:0x1e7b Value:0x3
+
+0: Status:0x80ff010c ThreadId:0x20001160 Address:0x1e63 Value:0x2
+Retrieving error history by reading from file... successful
+
+Registering my_error_hook... successful
+Reporting an error. Note that this will cause the system to halt
 
 
 ++ MbedOS Error Info ++
 Error Status: 0x800B0110 Code: 272 Module: 11
 Error Message: I2C driver error
-Location: 0x1C95
+Location: 0x1D91
 Error Value: 0xDEADDEAD
-Current Thread: main Id: 0x20001178 Entry: 0x737F StackSize: 0x1000 StackMem: 0x200022B8 SP: 0x2000324C 
+Current Thread: main Id: 0x20001160 Entry: 0x768F StackSize: 0x1000 StackMem: 0x200022B8 SP: 0x2000324C
 For more info, visit: https://mbed.com/s/error?error=0x800B0110&tgt=K64F
 -- MbedOS Error Info --
-```
-## Error history platform configuration
 
-The error history feature can be enabled by `platform.error-hist-enabled": true` configuration in `mbed_app.json` as below:
+= System will be rebooted due to a fatal error =
+= Reboot count(=1) reached maximum, system will halt after rebooting =
+```
+
+## Configuring the application
+
+You can enable the error history feature by setting `platform.error-hist-enabled` to true in the application configuration file:
+
 ```
     "target_overrides": {
         "*": {            
             "platform.error-hist-enabled": true            
         }
+    }
 ```
 
 ## Troubleshooting 
+
 If you have problems, you can review the [documentation](https://os.mbed.com/docs/latest/tutorials/debugging.html) for suggestions on what could be wrong and how to fix it. 
 
 ## Related links
 
-* [Mbed OS configuration](https://os.mbed.com/docs/latest/reference/configuration.html).
-* [Mbed OS serial communication](https://os.mbed.com/docs/latest/tutorials/serial-communication.html).
-* [Mbed boards](https://os.mbed.com/platforms/).
+- [Mbed OS crash reporting example](https://github.com/ARMmbed/mbed-os-example-crash-reporting).
+- [Mbed OS block device example](https://github.com/ARMmbed/mbed-os-example-blockdevice).
+- [Mbed OS file system example](https://github.com/ARMmbed/mbed-os-example-filesystem).
+- [Mbed OS configuration](https://os.mbed.com/docs/latest/reference/configuration.html).
+- [Mbed OS serial communication](https://os.mbed.com/docs/latest/tutorials/serial-communication.html).
+- [Mbed boards](https://os.mbed.com/platforms/).
 
 ### License and contributions
 
