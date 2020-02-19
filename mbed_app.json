@@ -2,7 +2,6 @@
     "target_overrides": {
         "*": {
             "platform.stdio-convert-newlines": 1,
-            "platform.crash-capture-enabled": false,
             "platform.error-hist-enabled": true
         }
     }
